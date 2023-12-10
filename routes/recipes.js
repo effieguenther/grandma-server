@@ -1,21 +1,24 @@
 const express = require('express');
 const recipeRouter = express.Router();
 const Recipe = require('../models/recipe');
-const ObjectId = require('mongodb').ObjectId;
+const cors = require('./cors');
+const authenticate = require('../authenticate');
 
 recipeRouter.route('/')
-  .get(async (req, res, next) => {
+  .options(cors.corsWithOptions, (req, res) => {
+    res.sendStatus(200);
+  })
+  .get(cors.cors, async (req, res, next) => {
     try {
       let all_recipes = await Recipe.find();
       res.status(200).send({ success: true, recipes: all_recipes })
     } catch (err) { next(err) }
   })
-  .post(async (req, res, next) => {
+  .post(cors.corsWithOptions, async (req, res, next) => {
     try {
       const new_recipe = await Recipe.create(req.body);
       res.status(200).send({ success: true, recipe: new_recipe })
     } catch (err) { next(err) }
-
   })
   .put((req, res) => {
     res.status(403).send('PUT operation not supported on /recipes');
@@ -25,8 +28,23 @@ recipeRouter.route('/')
   });
 
 recipeRouter.route('/search')
-  .post((req, res) => {
-    //will receive a search object with {title, ingredient, category}
+  .options(cors.corsWithOptions, authenticate.verifyUser, (req, res) => {
+    res.sendStatus(200);
+  })
+  .post(cors.corsWithOptions, async (req, res, next) => {
+    const { title, category } = req.body;
+
+    const query = {
+      $and: [
+          { title: { $regex: title, $options: 'i' } },
+          { category: { $regex: category, $options: 'i' } }
+      ]
+    };
+
+    try {
+      const recipes = await Recipe.find(query);
+      res.status(200).send({ success: true, recipes: recipes });
+    } catch (err) { next(err) }
   })
 
 module.exports = recipeRouter;
