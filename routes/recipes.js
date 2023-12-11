@@ -1,6 +1,7 @@
 const express = require('express');
 const recipeRouter = express.Router();
 const Recipe = require('../models/recipe');
+const Comment = require('../models/comment');
 const cors = require('./cors');
 const authenticate = require('../authenticate');
 
@@ -56,6 +57,20 @@ recipeRouter.route('/search')
     try {
       const recipes = await Recipe.find(query);
       res.status(200).send({ success: true, recipes: recipes });
+    } catch (err) { next(err) }
+  })
+
+recipeRouter.route('/comments/:recipeId')
+  .options(cors.corsWithOptions, (req, res) => {
+    res.sendStatus(200);
+  })
+  .post(cors.corsWithOptions, async (req, res, next) => {
+    const recipeId = req.params.recipeId;
+
+    try {
+      const comments = await Comment.find({ recipeId: recipeId })
+        .populate('authorId');
+      res.status(200).send({ success: true, comments: comments })
     } catch (err) { next(err) }
   })
 

@@ -10,6 +10,12 @@ Recipe
 - ["equipment"]
 - ["directions"]
 
+Comment
+- ObjectID(author)
+- ObjectID(recipe)
+- "text"
+- timestamps: true
+
 User
 - "facebookId"
 - "screen_name"
@@ -30,6 +36,18 @@ User
 - POST
     - body: { title: "title", category: "category", favorites: boolean }
     - returns { success: true, recipes: [recipes] }
+
+'/recipes/comments/:recipeId'
+- GET
+    - finds all comments associated with recipeId in params + populates authorId
+    - returns { success: true, comments: [comments] }
+
+### '/comments'
+
+'/comments'
+- POST
+    - body: { authorId: "id", recipeId: "id", text: "comment text" }
+    - returns: { success: true, comment: { comment } }
 
 ### '/users'
 
@@ -55,3 +73,8 @@ User
 - PUT
     - body: { name: "name" }
     - returns: { success: true, user: { udpated user } }
+
+'/users/logout'
+- POST
+    - destroys session and cookie
+    - returns { success: true }
