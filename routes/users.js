@@ -4,13 +4,14 @@ const User = require('../models/user');
 const passport = require('passport');
 const authenticate = require('../authenticate');
 const cors = require('./cors');
+const connect = require('../connect');
 
 userRouter.options('*', cors.corsWithOptions, (req, res) => {
   res.sendStatus(200);
 });
 
 //get the user that's currently logged in
-userRouter.get('/', cors.cors, async (req, res, next) => {
+userRouter.post('/', cors.corsWithOptions, authenticate.verifyUser, async (req, res, next) => {
     const user = req.user;
     if (!user) { res.status(400).send({ success: false, error: "no user object" }) }
 
@@ -72,9 +73,21 @@ userRouter.put('/changeDisplayName', cors.corsWithOptions, authenticate.verifyUs
   })
 
 //just checks to see if a user is logged in - will use this before pages load
-userRouter.get('/verify', cors.cors, (req, res) => {
-  if (req.user) { res.status(200).send({ success: true }) }
-  else { res.status(200).send({ success: false }) }
+userRouter.post('/verify', cors.corsWithOptions, authenticate.verifyUser, async (req, res) => {
+  res.status(200).send({ success: true });
+})
+
+//destroys the session and cookie
+userRouter.post('/logout', cors.corsWithOptions, async (req, res, next) => {
+  if (!req.user) { res.status(404).send('no user found') }
+  if (!req.sessionID) { res.status(404).send('no session found') }
+
+  connect.destroySession(req.sessionID, (err) => {
+    if (err) res.status(500).send('Internal server error');
+  });
+
+  res.clearCookie('connect.sid');
+  res.status(200).send({ success: true });
 })
 
 module.exports = userRouter;

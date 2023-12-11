@@ -28,7 +28,7 @@ User
 
 '/recipes/search'
 - POST
-    - body: { title: "title", category: "category" }
+    - body: { title: "title", category: "category", favorites: boolean }
     - returns { success: true, recipes: [recipes] }
 
 ### '/users'

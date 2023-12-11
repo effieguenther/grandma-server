@@ -25,30 +25,53 @@ const connect = async (uri) => {
     }
 }
 
-//initialize express app as a firebase function
+//initialize app
 admin.initializeApp();
 connect(config.mongoUrl);
 const firebaseApp = express();
-firebaseApp.set("trust proxy", 1);
+firebaseApp.set("trust proxy", true);
 
 //session storage in mongodb
 const store = new MongoStore({
     uri: config.mongoUrl,
     databaseName: 'grandma',
     collection: 'sessions',
-    expires: 1000 * 60 * 60 * 24 * 30, //1 month
+    expires: 1000 * 60 * 60 * 24 * 90, //3 months
     connectionOptions: {
         useNewUrlParser: true,
         useUnifiedTopology: true,
-      }
-  });
+    }
+});
+exports.extendSession = async (sessionId, expirationDate, done) => {
+    try {
+        const db = store.client.db('grandma');
+        await db.collection('sessions').updateOne(
+            { _id: sessionId },
+            { $set: { expires: expirationDate } }
+        ) 
+        return done();
+    } catch (err) {
+        done(err);
+    }      
+}
+exports.destroySession = (sessionId, done) => {
+    store.destroy(sessionId, (err) => {
+        if (err) { return done(err) }
+        return done();
+    })
+}
 
 //configure sessions
 firebaseApp.use(session({
-    secret: 'Lippy Lacy',
+    secret: config.sessionSecret,
     resave: false,
     saveUninitialized: false,
-    cookie: { secure: true, httpOnly: true, sameSite: 'none' },
+    cookie: { 
+        secure: true, 
+        httpOnly: true, 
+        sameSite: 'none',
+        expires: 1000 * 60 * 60 * 24 * 90 //3 months
+    },
     store: store,
     proxy: true
 }))
