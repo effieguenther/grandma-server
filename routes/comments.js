@@ -4,7 +4,6 @@ const Comment = require('../models/comment');
 const cors = require('./cors');
 const authenticate = require('../authenticate');
 const mongoose = require('mongoose')
-const ObjectId = mongoose.Types.ObjectId;
 
 commentRouter.route('/')
     .options(cors.corsWithOptions, (req, res) => {
@@ -28,6 +27,38 @@ commentRouter.route('/')
         } catch (err) {
             next(err);
         }
+    })
+
+commentRouter.route('/delete/:commentId')
+    .options(cors.corsWithOptions, (req, res) => {
+        res.sendStatus(200);
+    })
+    .put(cors.corsWithOptions, authenticate.verifyUser, async (req, res, next) => {
+        const commentId = req.params.commentId;
+        try {
+            const response = await Comment.findByIdAndDelete(commentId);
+            res.status(200).send({ success: true, response: response })
+        } catch (err) { next(err) }
+    })
+
+commentRouter.route('/:commentId')
+    .options(cors.corsWithOptions, (req, res) => {
+        res.sendStatus(200);
+    })
+    .put(cors.corsWithOptions, authenticate.verifyUser, async (req, res, next) => {
+        const commentId = req.params.commentId;
+        const { text } = req.body;
+        //TODO: form validation so user can't send an empty string
+        if (!text) { throw new Error("no text") }
+
+        try {
+            const updatedComment = await Comment.findByIdAndUpdate(
+                commentId, 
+                { text: text },
+                { new: true }
+            )
+            res.status(200).send({ success: true, comment: updatedComment });
+        } catch (err) { next(err) }
     })
 
 module.exports = commentRouter

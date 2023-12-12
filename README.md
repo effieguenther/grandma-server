@@ -49,6 +49,17 @@ User
     - body: { authorId: "id", recipeId: "id", text: "comment text" }
     - returns: { success: true, comment: { comment } }
 
+'/comments/delete/:commentId'
+- PUT
+    - deletes comment associated with Id in params
+    - returns { success: true, response: { response } }
+
+'/comments/:commentId'
+- PUT
+    - body: { text: "text" }
+    - updates text field of comment associated with Id in params
+    - returns { success: true, comment: { comment } }
+
 ### '/users'
 
 '/users'
