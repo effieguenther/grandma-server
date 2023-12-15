@@ -4,6 +4,8 @@ const Recipe = require('../models/recipe');
 const Comment = require('../models/comment');
 const cors = require('./cors');
 const authenticate = require('../authenticate');
+const PDFDoc = require('pdfkit');
+const fs = require('fs');
 
 recipeRouter.route('/')
   .options(cors.corsWithOptions, (req, res) => {
@@ -58,7 +60,7 @@ recipeRouter.route('/search')
       const recipes = await Recipe.find(query);
       res.status(200).send({ success: true, recipes: recipes });
     } catch (err) { next(err) }
-  })
+  });
 
 recipeRouter.route('/comments/:recipeId')
   .options(cors.corsWithOptions, (req, res) => {
@@ -72,6 +74,58 @@ recipeRouter.route('/comments/:recipeId')
         .populate('authorId');
       res.status(200).send({ success: true, comments: comments })
     } catch (err) { next(err) }
+  });
+
+recipeRouter.route('/pdf/:recipeId') 
+  .options(cors.corsWithOptions, (req, res) => {
+    res.sendStatus(200);
   })
+  .post(cors.corsWithOptions, async (req, res, next) => {
+    const recipeId = req.params.recipeId;
+    try {
+      const recipe = await Recipe.findById(recipeId);
+      const title = recipe.title;
+      const ingredient_groups = recipe.ingredients;
+      const doc = new PDFDoc({ size: 'LETTER' });
+      doc.pipe(fs.createWriteStream(`${title}.pdf`));
+      doc.pipe(res);
+        doc.fontSize(25).text(title);
+        doc.fontSize(15).text(`source: ${recipe.source}   category: ${recipe.category}`);
+        let y = 0;
+        ingredient_groups.map((ing_group, idx) => {
+          const left = ingredient_groups.length === 1 ? 
+            80 :
+            //2 ingredient groups - line wrapping works
+            ingredient_groups.length === 2 ?
+            (idx * 200) + 80 :
+            ingredient_groups.length === 3 ?
+            (idx * 150) + 80 : 
+            //4 ingredient groups - not line wrapping?? why
+            (idx * 120) + 80
+          if (ingredient_groups.length > 1) { 
+            doc.text(ing_group.title, idx === 0 ? 70 : left - (idx * 10), 130) 
+          }
+          doc.list(ing_group.ingredients, left, 150, {
+            listType: 'bullet',
+            bulletRadius: 0.05,
+            width: 200,
+            lineBreak: true
+          });
+          //keep track  of the tallest list
+          if (doc.y > y) { y = doc.y }
+        })
+        if (recipe.equipment.length !== 0) {
+          doc.text('equipment: ')
+          recipe.equipment.map((equipment) => {
+            doc.text(equipment);
+          })
+        }
+        doc.list(recipe.directions, 70, y + 15, {
+          listType: 'bullet',
+          bulletRadius: 0.05
+        })
+      doc.end();
+    } catch (err) { next(err) }
+  });
 
 module.exports = recipeRouter;
