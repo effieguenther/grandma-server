@@ -89,42 +89,54 @@ recipeRouter.route('/pdf/:recipeId')
       const doc = new PDFDoc({ size: 'LETTER' });
       doc.pipe(fs.createWriteStream(`${title}.pdf`));
       doc.pipe(res);
-        doc.fontSize(25).text(title);
-        doc.fontSize(15).text(`source: ${recipe.source}   category: ${recipe.category}`);
-        let y = 0;
+        doc.font(__dirname + '/../font/Sandy-Daniel.ttf')
+        doc.fontSize(20).text(title, { lineGap: 10 });
+        doc.fontSize(10).text(`source: ${recipe.source}   category: ${recipe.category}`);
+        let cell1_bottom = 0;
+        let cell2_bottom = 0;
+        let row2_bottom = 0;
+        let row1_top = doc.y;
+        doc.fontSize(12);
+        //ingredient groups will be mapped out in a 2x2 table
         ingredient_groups.map((ing_group, idx) => {
-          const left = ingredient_groups.length === 1 ? 
-            80 :
-            //2 ingredient groups - line wrapping works
-            ingredient_groups.length === 2 ?
-            (idx * 200) + 80 :
-            ingredient_groups.length === 3 ?
-            (idx * 150) + 80 : 
-            //4 ingredient groups - not line wrapping?? why
-            (idx * 120) + 80
-          if (ingredient_groups.length > 1) { 
-            doc.text(ing_group.title, idx === 0 ? 70 : left - (idx * 10), 130) 
-          }
-          doc.list(ing_group.ingredients, left, 150, {
-            listType: 'bullet',
-            bulletRadius: 0.05,
-            width: 200,
-            lineBreak: true
+          const title_left = (idx === 1 || idx === 3) ? 70 : 210 + 80
+          const list_left = (idx === 1 || idx === 3) ? 80 : 210 + 80 + 10;
+          const title_top = idx <=1 ? row1_top + 20 : idx === 3 ? cell1_bottom + 25 : cell2_bottom + 25 ;
+          const list_top = idx <=1 ? row1_top + 40 : idx === 3 ? cell1_bottom + 45 : cell2_bottom + 45;
+
+          if (ingredient_groups.length > 1) { doc.text(ing_group.title, title_left, title_top) }
+          doc.list(ing_group.ingredients, list_left, list_top, {
+              listType: 'bullet',
+              bulletRadius: 0.05,
+              width: 210,
+              lineGap: 6
           });
-          //keep track  of the tallest list
-          if (doc.y > y) { y = doc.y }
+
+          //keep track of the bottom values for placement of next row/cell
+          if (idx === 0) { cell1_bottom = doc.y }
+          if (idx === 1) { cell2_bottom = doc.y}
+          if (idx > 1 && (doc.y > row2_bottom)) { row2_bottom = doc.y }
+          console.log(`idx: ${idx}, cell1_bottom: ${cell1_bottom}, cell2_bottom: ${cell2_bottom}, row2_bottom: ${row2_bottom}`);
         })
+
+        let next_y = 
+          ingredient_groups.length <= 2 ? 
+          (cell1_bottom > cell2_bottom ? cell1_bottom : cell2_bottom) : 
+          row2_bottom;
+
         if (recipe.equipment.length !== 0) {
-          doc.text('equipment: ')
-          recipe.equipment.map((equipment) => {
-            doc.text(equipment);
-          })
+          doc.text('equipment: ' + recipe.equipment, 70, next_y + 15);
+          next_y = doc.y
         }
-        doc.list(recipe.directions, 70, y + 15, {
+
+        doc.list(recipe.directions, 70, next_y + 15, {
           listType: 'bullet',
-          bulletRadius: 0.05
+          bulletRadius: 0.05,
+          lineGap: 6
         })
+
       doc.end();
+
     } catch (err) { next(err) }
   });
 
