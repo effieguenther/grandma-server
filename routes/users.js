@@ -27,7 +27,7 @@ userRouter.get('/auth/facebook/callback',
   cors.corsWithOptions, 
   passport.authenticate('facebook', { failureRedirect: 'https://grandma-8ed4c.web.app/login' }), 
   (req, res) => {
-    res.redirect('http://localhost:3000/recipes');
+    res.redirect('https://grandma-8ed4c.web.app/recipes');
 });
 
 //if the provided favorite is in the user's favorites, remove it. Otherwise add it.

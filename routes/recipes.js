@@ -31,15 +31,15 @@ recipeRouter.route('/')
   });
 
 recipeRouter.route('/search')
-  .options(cors.corsWithOptions, authenticate.verifyUser, (req, res) => {
+  .options(cors.corsWithOptions, (req, res) => {
     res.sendStatus(200);
   })
-  .post(cors.corsWithOptions, authenticate.verifyUser, async (req, res, next) => {
+  .post(cors.corsWithOptions, async (req, res, next) => {
     const { title, category, favorites } = req.body;
-    const favoritesList = req.user.favorites;
     let query = {};
 
     if (favorites === true) {
+      const favoritesList = req.user.favorites;
       query = {
         $and: [
           { title: { $regex: title, $options: 'i' } },

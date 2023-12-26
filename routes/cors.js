@@ -9,7 +9,12 @@ const whitelist = [
 const corsOptionsDelegate = (req, callback) => {
     let corsOptions;
     if(whitelist.indexOf(req.header('Origin')) !== -1) {
-        corsOptions = { origin: true, credentials: true };
+        corsOptions = { 
+            origin: 'https://grandma-8ed4c.web.app', 
+            credentials: true,
+            methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+            optionsSuccessStatus: 204
+        };
     } else {
         corsOptions = { origin: false };
     }

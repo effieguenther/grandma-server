@@ -10,7 +10,7 @@ const { error } = require('firebase-functions/logger');
 passport.use(new FacebookStrategy({
     clientID: config.fbClientId,
     clientSecret: config.fbClientSecret,
-    callbackURL: 'https://us-central1-grandma-8ed4c.cloudfunctions.net/api/users/auth/facebook/callback'
+    callbackURL: 'https://grandma-8ed4c.web.app/api/users/auth/facebook/callback'
   },
   async function(accessToken, refreshToken, profile, cb) {
     try {
