@@ -30,6 +30,15 @@ userRouter.get('/auth/facebook/callback',
     res.redirect('https://grandma-8ed4c.web.app/recipes');
 });
 
+//sign in with google
+userRouter.get('/auth/google/', passport.authenticate('google', {scope: ['https://www.googleapis.com/auth/userinfo.profile']}));
+userRouter.get('/auth/google/callback', 
+  cors.corsWithOptions, 
+  passport.authenticate('google', { failureRedirect: 'https://grandma-8ed4c.web.app/login' }), 
+  (req, res) => {
+    res.redirect('https://grandma-8ed4c.web.app/recipes');
+});
+
 //if the provided favorite is in the user's favorites, remove it. Otherwise add it.
 userRouter.put('/updateFavorites', cors.corsWithOptions, authenticate.verifyUser, async (req, res, next) => {
   try {

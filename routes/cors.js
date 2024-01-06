@@ -10,7 +10,7 @@ const corsOptionsDelegate = (req, callback) => {
     let corsOptions;
     if(whitelist.indexOf(req.header('Origin')) !== -1) {
         corsOptions = { 
-            origin: 'https://grandma-8ed4c.web.app', 
+            origin: req.header('Origin'), 
             credentials: true,
             methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
             optionsSuccessStatus: 204

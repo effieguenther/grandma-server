@@ -1,4 +1,5 @@
 const FacebookStrategy = require('passport-facebook').Strategy;
+var GoogleStrategy = require('passport-google-oauth20').Strategy;
 const passport = require('passport');
 const add = require('date-fns/add');
 const User = require('./models/user');
@@ -22,6 +23,26 @@ passport.use(new FacebookStrategy({
         const newUser = new User({ facebookId: profile.id, display_name: profile.displayName });
         await newUser.save();
         return cb(null, newUser);
+    } catch (err) { return cb(err) }
+  }
+));
+
+passport.use(new GoogleStrategy({
+    clientID: config.gClientId,
+    clientSecret: config.gClientSecret,
+    callbackURL: "https://grandma-8ed4c.web.app/api/users/auth/google/callback"
+  },
+  async function(accessToken, refreshToken, profile, cb) {
+    try {
+      //returns existing user or creates one
+      const user = await User.findOne({ googleId: profile.id });
+      if (user) {
+        return cb(null, user);
+      }
+      console.log("new google user creation in progres...")
+      const newUser = new User({ googleId: profile.id, display_name: profile.displayName });
+      await newUser.save();
+      return cb(null, newUser);
     } catch (err) { return cb(err) }
   }
 ));

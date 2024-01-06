@@ -5,7 +5,11 @@ const passportFacebook = require('passport-facebook');
 const userSchema = new Schema({
     facebookId: {
         type: String,
-        required: true
+        default: ""
+    },
+    googleId: {
+        type: String,
+        default: ""
     },
     display_name: {
         type: String,
