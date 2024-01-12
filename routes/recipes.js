@@ -140,4 +140,16 @@ recipeRouter.route('/pdf/:recipeId')
     } catch (err) { next(err) }
   });
 
+  recipeRouter.route('/:recipeId')
+    .options(cors.corsWithOptions, (req, res) => {
+      res.sendStatus(200);
+    })
+    .delete(cors.corsWithOptions, async (req, res, next) => {
+      try {
+        const recipeId = req.params.recipeId;
+        const response = await Recipe.findByIdAndDelete(recipeId);
+        res.status(200).send({ success: true, response: response });
+      } catch (err) { next(err) }
+    })
+
 module.exports = recipeRouter;
