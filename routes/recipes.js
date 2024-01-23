@@ -97,11 +97,12 @@ recipeRouter.route('/pdf/:recipeId')
         let row2_bottom = 0;
         let row1_top = doc.y;
         doc.fontSize(12);
+
         //ingredient groups will be mapped out in a 2x2 table
         ingredient_groups.map((ing_group, idx) => {
-          const title_left = (idx === 1 || idx === 3) ? 70 : 210 + 80
-          const list_left = (idx === 1 || idx === 3) ? 80 : 210 + 80 + 10;
-          const title_top = idx <=1 ? row1_top + 20 : idx === 3 ? cell1_bottom + 25 : cell2_bottom + 25 ;
+          const title_left = (idx === 0 || idx === 2) ? 70 : 210 + 80;
+          const list_left = (idx === 0 || idx === 2) ? 80 : 210 + 80 + 10;
+          const title_top = idx <=1 ? row1_top + 20 : idx === 3 ? cell1_bottom + 25 : cell2_bottom + 25;
           const list_top = idx <=1 ? row1_top + 40 : idx === 3 ? cell1_bottom + 45 : cell2_bottom + 45;
 
           if (ingredient_groups.length > 1) { doc.text(ing_group.title, title_left, title_top) }
@@ -149,6 +150,16 @@ recipeRouter.route('/pdf/:recipeId')
         const recipeId = req.params.recipeId;
         const response = await Recipe.findByIdAndDelete(recipeId);
         res.status(200).send({ success: true, response: response });
+      } catch (err) { next(err) }
+    })
+    .put(cors.corsWithOptions, async (req, res, next) => {
+      const recipeId = req.params.recipeId;
+      try {
+        const recipe = await Recipe.findOneAndUpdate({ _id: recipeId },
+          { $set: req.body },
+          { new: true }  
+        )
+        res.status(200).send({ success: true, recipe: recipe });
       } catch (err) { next(err) }
     })
 
