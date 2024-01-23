@@ -31,7 +31,7 @@ userRouter.get('/auth/facebook/callback',
 });
 
 //sign in with google
-userRouter.get('/auth/google/', passport.authenticate('google', {scope: ['https://www.googleapis.com/auth/userinfo.profile']}));
+userRouter.get('/auth/google/', passport.authenticate('google', {scope: ['https://www.googleapis.com/auth/userinfo.profile', 'https://www.googleapis.com/auth/userinfo.email']}));
 userRouter.get('/auth/google/callback', 
   cors.corsWithOptions, 
   passport.authenticate('google', { failureRedirect: 'https://grandma-8ed4c.web.app/login' }), 
@@ -80,6 +80,23 @@ userRouter.put('/changeDisplayName', cors.corsWithOptions, authenticate.verifyUs
       res.status(200).send({ success: true, user: updatedUser });
     } catch (err) { next(err) }
   })
+
+//opt in/out of notifications
+userRouter.put('/changeNotifications', cors.corsWithOptions, authenticate.verifyUser, async (req, res, next) => {
+  
+  const user = req.user;
+  const notifications = req.body.notifications;
+
+  if (!notifications) { res.status(400).send({ success: false, error: "no notifications in body" }) }
+  try {
+    const updatedUser = await User.findOneAndUpdate(
+      { _id: user._id},
+      { $set: { notifications: notifications } },
+      { new: true }
+    )
+    res.status(200).send({ success: true, user: updatedUser });
+  } catch (err) { next(err) }
+})
 
 //just checks to see if a user is logged in - will use this before pages load
 userRouter.post('/verify', cors.corsWithOptions, authenticate.verifyUser, async (req, res) => {

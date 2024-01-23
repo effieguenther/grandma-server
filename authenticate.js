@@ -40,7 +40,8 @@ passport.use(new GoogleStrategy({
         return cb(null, user);
       }
       console.log("new google user creation in progres...")
-      const newUser = new User({ googleId: profile.id, display_name: profile.displayName });
+      const email = profile.emails && profile.emails.length > 0 ? profile.emails[0].value : null;
+      const newUser = new User({ googleId: profile.id, display_name: profile.displayName, email: email });
       await newUser.save();
       return cb(null, newUser);
     } catch (err) { return cb(err) }
