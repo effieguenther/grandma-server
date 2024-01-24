@@ -12,7 +12,7 @@ commentRouter.route('/')
     .options(cors.corsWithOptions, (req, res) => {
         res.sendStatus(200);
     })
-    .post(cors.corsWithOptions, async (req, res, next) => {
+    .post(cors.corsWithOptions, authenticate.verifyUser, async (req, res, next) => {
         const { authorId, recipeId, text } = req.body;
         if (!authorId) { throw new Error("no authorId") }
         if (!recipeId) { throw new Error("no recipeId") }
