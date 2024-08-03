@@ -1,5 +1,25 @@
 # Grandma's Kitchen (Server)
 
+## Overview
+
+This Express application has been deployed as a Firebase cloud function. It essentially functions as an API for a MongoDB database. The structure is as follows:
+
+Firebase cloud function -> Express App -> MongoDB Atlas
+
+The entry point has been altered in package.json with this line:
+```
+"main": "connect.js"
+```
+
+[connect.js](https://github.com/effieguenther/grandma-server/blob/main/connect.js) is where the magic happens! All of the session, Firebase, and Mongo logic is abstracted into an outer app, which makes it possible to configure the cloud funcion with just 2 lines of code:
+
+```
+firebaseApp.use(app);
+exports.api = functions.https.onRequest(firebaseApp);
+```
+
+Any request to the "api" cloud function is then handled by this app and its routes. 
+
 ## Schemas
 
 Recipe
@@ -25,7 +45,6 @@ User
 
 ### '/recipes'
 
-'/recipes'
 - GET
     - returns { success: true, recipes: [recipes] }
 - POST
@@ -44,7 +63,6 @@ User
 
 ### '/comments'
 
-'/comments'
 - POST
     - body: { authorId: "id", recipeId: "id", text: "comment text" }
     - returns: { success: true, comment: { comment } }
@@ -62,7 +80,6 @@ User
 
 ### '/users'
 
-'/users'
 - GET
     - returns { success: true, user: {current user} }
 
