@@ -91,21 +91,29 @@ recipeRouter.route('/pdf/:recipeId')
     } catch (err) { next(err) }
   });
 
-recipeRouter.route('/pdf-all')
-.options(cors.corsWithOptions, (req, res) => {
-  res.sendStatus(200);
-})
-.post(cors.corsWithOptions, async (req, res, next) => {
-  try {
-    let all_recipes = await Recipe.find();
-    const doc = new PDFDoc({ size: 'LETTER' });
-    doc.pipe(fs.createWriteStream('all-recipes.pdf'));  
-    for (let recipe of all_recipes) {
-      generateRecipePDF(doc, res, recipe);
-    }
-    doc.end()
-  } catch (err) { next(err) }
-});
+// recipeRouter.route('/pdf-all')
+// .options(cors.corsWithOptions, (req, res) => {
+//   res.sendStatus(200);
+// })
+// .post(cors.corsWithOptions, async (req, res, next) => {
+//   try {
+//     let all_recipes = await Recipe.find();
+//     const doc = new PDFDoc({ size: 'LETTER' });
+//     // doc.pipe(fs.createWriteStream('all-recipes.pdf'));  
+//     // Set response headers
+//     res.setHeader('Content-Type', 'application/pdf');
+//     res.setHeader('Content-Disposition', 'attachment; filename="all-recipes.pdf"');
+    
+//     // Pipe the PDF directly to the response
+//     doc.pipe(res);
+//     emitter.setMaxListeners(50);
+
+//     for (let recipe of all_recipes) {
+//       generateRecipePDF(doc, res, recipe);
+//     }
+//     doc.end()
+//   } catch (err) { next(err) }
+// });
 
   recipeRouter.route('/:recipeId')
     .options(cors.corsWithOptions, (req, res) => {
@@ -142,12 +150,12 @@ const generateRecipePDF = (doc, res, recipe) => {
     let row1_top = doc.y;
     doc.fontSize(12);
 
-    //ingredient groups will be mapped out in a 2x2 table
+    // ingredient groups will be mapped out in a 2x2 table
     ingredient_groups.map((ing_group, idx) => {
       const title_left = (idx === 0 || idx === 2) ? 70 : 210 + 80;
       const list_left = (idx === 0 || idx === 2) ? 80 : 210 + 80 + 10;
-      const title_top = idx <=1 ? row1_top + 20 : idx === 3 ? cell1_bottom + 25 : cell2_bottom + 25;
-      const list_top = idx <=1 ? row1_top + 40 : idx === 3 ? cell1_bottom + 45 : cell2_bottom + 45;
+      const title_top = idx <=1 ? row1_top + 20 : idx === 3 ? cell2_bottom + 25 : cell1_bottom + 25;
+      const list_top = idx <=1 ? row1_top + 40 : idx === 3 ? cell2_bottom + 45 : cell1_bottom + 45;
 
       if (ingredient_groups.length > 1) { doc.text(ing_group.title, title_left, title_top) }
       doc.list(ing_group.ingredients, list_left, list_top, {
@@ -157,23 +165,23 @@ const generateRecipePDF = (doc, res, recipe) => {
           lineGap: 6
       });
 
-      //keep track of the bottom values for placement of next row/cell
+      // keep track of the bottom values for placement of next row/cell
       if (idx === 0) { cell1_bottom = doc.y }
-      if (idx === 1) { cell2_bottom = doc.y}
+      if (idx === 1) { cell2_bottom = doc.y }
       if (idx > 1 && (doc.y > row2_bottom)) { row2_bottom = doc.y }
       console.log(`idx: ${idx}, cell1_bottom: ${cell1_bottom}, cell2_bottom: ${cell2_bottom}, row2_bottom: ${row2_bottom}`);
-    })
+    });
 
-    let next_y = 
-      ingredient_groups.length <= 2 ? 
-      (cell1_bottom > cell2_bottom ? cell1_bottom : cell2_bottom) : 
-      row2_bottom;
+    // determine where the lowest point is on the y-axis
+    let next_y = Math.max(cell1_bottom, cell2_bottom, row2_bottom);
 
+    // add the equipment if it's there
     if (recipe.equipment.length !== 0) {
       doc.text('equipment: ' + recipe.equipment, 70, next_y + 15);
       next_y = doc.y
     }
 
+    // add the directions
     doc.list(recipe.directions, 70, next_y + 15, {
       listType: 'bullet',
       bulletRadius: 0.05,
